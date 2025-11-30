@@ -1,0 +1,92 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-AC-000005
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-11-30
+    Last Modified   : 2025-11-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-AC-000005
+
+.TESTED ON
+    Date(s) Tested  : 2025-11-30
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+.STIG
+  ID: WN10-AC-000005
+  Title: Windows 10 account lockout duration must be configured to 15 minutes or greater.
+  Note: A value of 0 (admin unlock required) is more restrictive and acceptable.
+#>
+
+.CODE
+
+# Requires admin
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Error "Run this script in an elevated PowerShell session."
+    exit 1
+}
+
+function Get-LockoutDurationMinutes {
+    $out = & cmd /c 'net accounts' 2>$null
+    if (-not $out) { throw "Failed to query 'net accounts'." }
+    # Sample line: "Lockout duration (minutes): 30"
+    $line = $out | Where-Object { $_ -match 'Lockout duration' }
+    if (-not $line) { throw "Could not find 'Lockout duration' in output." }
+    $m = [regex]::Match($line, 'Lockout duration.*?:\s*(\d+)')
+    if (-not $m.Success) { throw "Could not parse lockout duration value." }
+    return [int]$m.Groups[1].Value
+}
+
+function Set-LockoutDurationMinutes {
+    param([Parameter(Mandatory=$true)][int]$Minutes)
+    if ($Minutes -lt 0) { throw "Minutes must be >= 0." }
+    # Use NET ACCOUNTS to set local policy
+    & cmd /c "net accounts /lockoutduration:$Minutes" | Out-Null
+}
+
+try {
+    $current = Get-LockoutDurationMinutes
+    Write-Host "Current lockout duration: $current minute(s)"
+
+    # STIG allows 0 (admin unlock). If 0, do nothing.
+    if ($current -eq 0) {
+        Write-Host "Lockout duration is 0 (administrator unlock required). This is acceptable per STIG. No change made."
+        exit 0
+    }
+
+    if ($current -lt 15) {
+        Write-Host "Lockout duration is less than 15. Setting to 15 minutes..."
+        Set-LockoutDurationMinutes -Minutes 15
+        Start-Sleep -Seconds 2
+        $verify = Get-LockoutDurationMinutes
+        if ($verify -eq 15) {
+            Write-Host "Success: Lockout duration set to 15 minutes."
+            exit 0
+        } else {
+            throw "Verification failed. Current value: $verify minute(s)"
+        }
+    } else {
+        Write-Host "Lockout duration already meets or exceeds 15 minutes. No change made."
+        exit 0
+    }
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+
+
+
+ 
