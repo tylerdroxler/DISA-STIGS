@@ -1,0 +1,61 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-AC-000020
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-12-01
+    Last Modified   : 2025-12-01
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-AC-000020
+
+.TESTED ON
+    Date(s) Tested  : 2025-12-01
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+#>
+
+.CODE
+
+# WN10-AC-000020: Configure password history to 24 passwords remembered
+# This updates the local security policy using secedit
+
+# Paths for temp files
+$infFile = "$env:TEMP\PasswordPolicy.inf"
+$dbFile  = "$env:TEMP\PasswordPolicy.sdb"
+
+# Build the INF file content
+$infContent = @"
+[Unicode]
+Unicode=yes
+[System Access]
+PasswordHistorySize = 24
+[Version]
+signature="$CHICAGO$"
+Revision=1
+"@
+
+# Write INF file
+Set-Content -Path $infFile -Value $infContent -Encoding ASCII
+
+# Apply the policy
+secedit /configure /db $dbFile /cfg $infFile /areas SECURITYPOLICY /quiet
+
+# Cleanup temp files
+Remove-Item $infFile -Force -ErrorAction SilentlyContinue
+Remove-Item $dbFile -Force -ErrorAction SilentlyContinue
+
+Write-Output "Password history policy successfully set to 24."
+
+
+ 
