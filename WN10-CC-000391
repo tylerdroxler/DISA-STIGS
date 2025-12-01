@@ -1,0 +1,59 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-CC-000391
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-12-01
+    Last Modified   : 2025-12-01
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-CC-000391
+
+.TESTED ON
+    Date(s) Tested  : 2025-12-01
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+#>
+
+.CODE
+
+# WN10-CC-000391: Internet Explorer must be disabled on Windows 10
+# Registry Path: HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Main
+# Value Name: DisableInternetExplorer11
+# Required Value: 1 (disabled)
+
+$regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main"
+$regName = "DisableInternetExplorer11"
+$desiredValue = 1
+
+# Ensure registry path exists
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer" -Name "Main" -Force | Out-Null
+}
+
+# Get current value
+$currentValue = (Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue).$regName
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Updating $regName to $desiredValue..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Registry updated successfully."
+} else {
+    Write-Output "$regName is already set to $desiredValue. No changes needed."
+}
+
+
+
+
+   
