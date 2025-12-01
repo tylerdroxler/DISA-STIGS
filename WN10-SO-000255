@@ -1,0 +1,37 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-SO-000255
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-12-01
+    Last Modified   : 2025-12-01
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-SO-000255
+
+.TESTED ON
+    Date(s) Tested  : 2025-12-01
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+#>
+
+.CODE
+
+# STIG: WN10-SO-000255
+# User Account Control must automatically deny elevation requests for standard users
+
+$regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+Set-ItemProperty -Path $regPath -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord
+
+
+ 
