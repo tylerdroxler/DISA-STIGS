@@ -1,0 +1,57 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-SO-000100
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-12-01
+    Last Modified   : 2025-12-01
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-SO-000100
+
+.TESTED ON
+    Date(s) Tested  : 2025-12-01
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+#>
+
+.CODE
+
+# WN10-SO-000100: Configure SMB client to always perform SMB packet signing
+# Registry Path: HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters
+# Value Name: RequireSecuritySignature
+# Required Value: 1 (enabled)
+
+$regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters"
+$regName = "RequireSecuritySignature"
+$desiredValue = 1
+
+# Ensure registry path exists
+if (-not (Test-Path $regPath)) {
+    Write-Output "Creating registry path: $regPath"
+    New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" -Name "Parameters" -Force | Out-Null
+}
+
+# Get current value
+$currentValue = (Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue).$regName
+
+if ($currentValue -ne $desiredValue) {
+    Write-Output "Updating $regName to $desiredValue..."
+    Set-ItemProperty -Path $regPath -Name $regName -Value $desiredValue
+    Write-Output "Registry updated successfully."
+} else {
+    Write-Output "$regName is already set to $desiredValue. No changes needed."
+}
+
+
+ 
