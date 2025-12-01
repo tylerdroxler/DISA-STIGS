@@ -1,0 +1,76 @@
+ <#
+.SYNOPSIS
+    This PowerShell script ensure compliance with DISA STIG WN10-CC-000185
+
+.NOTES
+    Author          : Tyler Droxler
+    LinkedIn        : linkedin.com/in/tyler-droxler-549503198/
+    GitHub          : github.com/tylerdroxler
+    Website         : tylerdroxler.com
+    Date Created    : 2025-11-30
+    Last Modified   : 2025-11-30
+    Version         : 1.0
+    CVEs            : N/A
+    Plugin IDs      : N/A
+    STIG-ID         : WN10-CC-000185
+
+.TESTED ON
+    Date(s) Tested  : 2025-11-30
+    Tested By       : Tyler Droxler
+    Systems Tested  : Windows 10 Enterprise Ver. 10.0.19044
+    PowerShell Ver. : 5.1
+
+.USAGE
+    Script MUST be ran as ADMINISTRATOR
+
+#>
+
+.CODE
+
+<#
+.STIG
+  ID: WN10-CC-000185
+  Title: The default autorun behavior must be configured to prevent autorun commands.
+  Requirement: Registry value NoAutorun must be set to 1
+  Path: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer
+#>
+
+# Ensure script runs elevated
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
+    ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Error "Run this script in an elevated PowerShell session."
+    exit 1
+}
+
+try {
+    $regPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"
+    $name = "NoAutorun"
+    $desiredValue = 1
+
+    # Create key if missing
+    if (-not (Test-Path $regPath)) {
+        Write-Host "Registry path not found. Creating..."
+        New-Item -Path $regPath -Force | Out-Null
+    }
+
+    # Set value
+    Write-Host "Configuring $name to $desiredValue..."
+    New-ItemProperty -Path $regPath -Name $name -Value $desiredValue -PropertyType DWord -Force | Out-Null
+
+    # Verify
+    $current = (Get-ItemProperty -Path $regPath -Name $name).$name
+    if ($current -eq $desiredValue) {
+        Write-Host "Success: $name is set to $desiredValue."
+    } else {
+        throw "Verification failed. Current value: $current"
+    }
+}
+catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
+
+
+
+
+ 
